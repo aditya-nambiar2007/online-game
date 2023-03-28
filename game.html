@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game</title>
+</head>
+<body>
+    <div id="game">
+    </div>
+    <table style="
+    position: absolute;
+    bottom: 0;
+    height: 50%;
+    overflow: auto;
+    width: 100%;
+" cellspacing="0">
+        <tbody>
+        </tbody>
+    </table>
+    <div id="form" style="
+    background: black;
+    position: relative;
+    width: 99vw;
+    height: 99vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+">
+        <form action="" method="get">
+            <input type="text" name="id" placeholder="ID" style="background-color: black;color: antiquewhite;font-size: 5vmin;display: block;" maxlength="10" required onchange="this.value=this.value.replace(/(\s|-|\\|\/|\*|\+|\%|\&|\||\!)+/g,'_')">
+            <input type="text" name="room" placeholder="ROOM" style="background-color: black;color: antiquewhite;font-size: 5vmin;display: block;" maxlength="10" required onchange="this.value=this.value.replace(/(\s|-|\\|\/|\*|\+|\%|\&|\||\!)+/g,'_')">
+            <input type="submit" value="GO >" style="
+    background-color: navy;
+    color: orange;
+    font-size: 5vmin;
+">
+        </form>
+
+    </div>
+    <style>
+        html,body{
+            height: 100%;
+            width: 100%;
+            margin: 0;
+                }
+        #game{
+            width: 100%;
+            height: 50%;
+            position: absolute;
+            background-color: black;
+            overflow: hidden;
+        }
+        span{
+            background-color: red;
+            display: block;
+        position: absolute;
+        animation-name: slide;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        width: 10%;
+        height: 2vw;
+}      
+td {
+    text-align: center;
+    font-size: 3vmin;
+    height: 3%;
+    position: relative;
+    border: 1px solid black;}
+        
+        @keyframes slide {
+            from{left:120%}
+            to {left: -20%}
+        }
+    </style>
+<script>
+    let score=0
+    let players={}
+    let id=new URL(location.href).searchParams.get('id')
+    let room=new URL(location.href).searchParams.get('room')
+    if (!id || !room) {
+        document.getElementById('form').style.display='flex'
+    }
+    else{document.getElementById('form').style.display='none'}
+    let ws = io.connect(location.href)
+
+    ws.emit('c',{id:id,room:room})
+    ws.on('player',e=>{players[e]=0})
+    ws.on('btn',()=>{document.getElementById('game').onclick=()=>{ws.emit('start')}})
+    function f(e) {
+        ws.emit('msg',{f:'del',p:[e.id,id]})
+    }
+    let functions={
+        del:e=>{
+            document.getElementById(e[0]).remove()
+            if (player[e[1]]) {player[e[1]]=1}
+            else{players[ e[1] ]++}
+        },
+        create:e=>{
+            let dir;
+            if (e[3]>0.5) {
+                dir='reverse'
+            } else {
+                dir='normal'
+            }
+            let span=document.createElement('span')
+            span.setAttribute('id',e[0])
+            span.setAttribute('onclick','f(this)')
+            span.setAttribute('onanimationend','this.remove()')
+            span.setAttribute('style',`top: ${e[2]*100}%; animation-direction:${dir}; animation-duration: ${e[1]}s;`)
+
+            document.getElementById('game').append(span)
+                }
+    }
+
+    ws.on('f',e=>{functions[e.f](e.p)})
+    x=setInterval(()=>{
+        str='<tr><td>Name</td><td>Score</td></tr>'
+        for (const k in players) {
+            str+="<tr>"+"<td>"+k+"</td><td>"+players[k]+"</td></tr>"
+        }
+        document.querySelector('table>tbody').innerHTML=str    })
+        arr=[]
+        setTimeout(() => {
+            Object.keys(players).forEach(e=>arr.push([players[e],e]))
+            arr.sort(a,b=>b[0]-a[0])
+            alert(`The Winner Is ${arr[0][1]}`)
+        }, 1000*120);
+</script>
+</body>
+</html>
